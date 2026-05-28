@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Adjective Adventure!</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --c1:#FF6B6B;--c2:#FFD93D;--c3:#6BCB77;--c4:#4D96FF;--c5:#FF922B;
+    --c6:#CC5DE8;--c7:#20C997;--c8:#F06595;
+    --bg:#FFF8E7;--card:#fff;--text:#2d2d2d;--muted:#888;
+    --radius:18px;--shadow:0 4px 20px rgba(0,0,0,0.10);
+  }
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  #app{max-width:700px;margin:0 auto;padding:16px;}
+  .header{
+    text-align:center;padding:22px 0 10px;
+    font-family:'Baloo 2',sans-serif;font-size:36px;font-weight:800;
+    background:linear-gradient(135deg,var(--c1),var(--c6),var(--c4));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;letter-spacing:-0.5px;
+  }
+  .subtitle{text-align:center;font-size:15px;color:var(--muted);margin-bottom:14px;}
+  .progress-bar-wrap{background:#e9e4da;border-radius:999px;height:12px;margin-bottom:4px;overflow:hidden;}
+  .progress-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#6BCB77,#4D96FF);transition:width 0.5s;}
+  .progress-label{font-size:12px;color:var(--muted);margin-bottom:12px;text-align:right;}
+  .stars-bar{display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:14px;}
+  .star{font-size:24px;transition:transform 0.3s;filter:grayscale(1) opacity(0.3);}
+  .star.lit{filter:none;transform:scale(1.2);}
+  .section-badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:6px 18px;font-size:14px;font-weight:700;margin-bottom:14px;box-shadow:var(--shadow);border:2px solid var(--c2);}
+  .section-icon{font-size:20px;}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 22px;margin-bottom:14px;border:2.5px solid transparent;transition:border 0.2s;}
+  .card.correct{border-color:var(--c3);background:#f0fff4;}
+  .card.wrong{border-color:var(--c1);background:#fff5f5;}
+  .question-text{font-size:18px;font-weight:700;margin-bottom:18px;line-height:1.4;}
+  .question-num{color:var(--muted);font-size:13px;font-weight:600;margin-bottom:4px;}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .opt-btn{background:#f5f0e8;border:2.5px solid #e5ddd0;border-radius:14px;padding:12px 10px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.18s;font-family:'Nunito',sans-serif;color:var(--text);text-align:center;}
+  .opt-btn:hover:not(:disabled){background:var(--c4);color:#fff;border-color:var(--c4);transform:translateY(-2px);}
+  .opt-btn.selected-correct{background:var(--c3);color:#fff;border-color:var(--c3);}
+  .opt-btn.selected-wrong{background:var(--c1);color:#fff;border-color:var(--c1);}
+  .opt-btn.reveal-correct{background:var(--c3);color:#fff;border-color:var(--c3);}
+  .opt-btn:disabled{cursor:not-allowed;opacity:0.8;}
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .match-col{display:flex;flex-direction:column;gap:8px;}
+  .match-item{background:#f5f0e8;border:2.5px solid #e5ddd0;border-radius:12px;padding:10px 14px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.18s;text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;}
+  .match-item:hover:not(.matched):not(.locked){background:#ffe8b0;border-color:var(--c2);}
+  .match-item.selected{background:var(--c4);color:#fff;border-color:var(--c4);}
+  .match-item.matched{background:var(--c3);color:#fff;border-color:var(--c3);cursor:default;}
+  .match-item.wrong-flash{background:var(--c1);color:#fff;border-color:var(--c1);}
+  .match-item.locked{cursor:default;}
+  .gap-text{font-size:17px;font-weight:700;line-height:2;margin-bottom:14px;}
+  .blank{display:inline-block;min-width:100px;border-bottom:3px solid var(--c4);background:#eaf2ff;border-radius:6px;padding:0 8px;font-weight:700;color:var(--c4);font-size:16px;vertical-align:middle;text-align:center;height:30px;line-height:30px;}
+  .blank.filled-correct{background:#d0f5e0;border-color:var(--c3);color:#1a7a3d;}
+  .blank.filled-wrong{background:#ffe0e0;border-color:var(--c1);color:#b22222;}
+  .word-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .word-chip{background:#f5f0e8;border:2px solid #ddd;border-radius:999px;padding:6px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.16s;font-family:'Nunito',sans-serif;}
+  .word-chip:hover:not(:disabled){background:var(--c6);color:#fff;border-color:var(--c6);}
+  .word-chip:disabled{opacity:0.45;cursor:not-allowed;text-decoration:line-through;}
+  .think-emoji{font-size:38px;text-align:center;margin-bottom:8px;}
+  .think-hint{font-size:13px;color:var(--muted);margin-top:8px;font-style:italic;}
+  .ai-response{background:linear-gradient(135deg,#eaf2ff,#f0fff4);border-radius:12px;padding:14px 16px;margin-top:12px;font-size:15px;line-height:1.6;border:1.5px solid #d0e6ff;display:none;}
+  .ai-response.show{display:block;}
+  .feedback-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 18px;font-size:14px;font-weight:700;margin-top:10px;}
+  .feedback-pill.good{background:#d0f5e0;color:#1a7a3d;}
+  .feedback-pill.bad{background:#ffe0e0;color:#b22222;}
+  .next-btn{display:none;width:100%;margin-top:16px;background:linear-gradient(135deg,var(--c4),var(--c6));color:#fff;border:none;border-radius:14px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;font-family:'Baloo 2',sans-serif;letter-spacing:0.3px;transition:opacity 0.2s,transform 0.15s;}
+  .next-btn:hover{opacity:0.9;transform:translateY(-2px);}
+  .next-btn.visible{display:block;}
+  .submit-btn{background:linear-gradient(135deg,var(--c5),var(--c1));color:#fff;border:none;border-radius:14px;padding:11px 24px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Baloo 2',sans-serif;margin-top:12px;transition:opacity 0.2s;}
+  .submit-btn:hover{opacity:0.88;}
+  .end-screen{text-align:center;padding:30px 16px;}
+  .end-title{font-family:'Baloo 2',sans-serif;font-size:34px;font-weight:800;margin-bottom:8px;}
+  .end-score{font-size:22px;font-weight:700;margin-bottom:20px;}
+  .medal{font-size:70px;margin-bottom:10px;}
+  .restart-btn{background:linear-gradient(135deg,var(--c3),var(--c4));color:#fff;border:none;border-radius:14px;padding:14px 32px;font-size:18px;font-weight:800;cursor:pointer;font-family:'Baloo 2',sans-serif;margin-top:10px;}
+  .section-intro{background:linear-gradient(135deg,#fff3cd,#ffe8b0);border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:16px;border:2px solid var(--c2);}
+  .section-intro h2{font-family:'Baloo 2',sans-serif;font-size:26px;margin-bottom:8px;}
+  .section-intro p{font-size:15px;color:#555;}
+  .start-section-btn{background:var(--c2);color:#7a5c00;border:none;border-radius:14px;padding:12px 30px;font-size:16px;font-weight:800;cursor:pointer;font-family:'Baloo 2',sans-serif;margin-top:16px;transition:opacity 0.2s;}
+  .start-section-btn:hover{opacity:0.85;}
+  .loading-dots{display:inline-flex;gap:5px;margin-left:8px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--c4);animation:bounce 1.2s infinite;}
+  .dot:nth-child(2){animation-delay:0.2s;background:var(--c6);}
+  .dot:nth-child(3){animation-delay:0.4s;background:var(--c3);}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+
+  /* Confetti animation */
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  .confetti-piece{position:fixed;top:0;width:12px;height:12px;border-radius:2px;animation:fall linear forwards;pointer-events:none;z-index:999;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1 class="header">🌟 Adjective Adventure!</h1>
+  <p class="subtitle">Level up your English describing words!</p>
+  <div class="stars-bar" id="stars-bar"></div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
+  <div class="progress-label" id="prog-label">Question 1 of 15</div>
+  <div id="game-area"></div>
+</div>
+
+<script>
+const ANTHROPIC_API_KEY = ''; // Optional: paste your Anthropic API key here for AI explanations
+
+const adjectives = [
+  {word:"happy",meaning:"feeling good and pleased",emoji:"😊"},
+  {word:"sad",meaning:"feeling unhappy",emoji:"😢"},
+  {word:"big",meaning:"large in size",emoji:"🐘"},
+  {word:"small",meaning:"little, not big",emoji:"🐭"},
+  {word:"hot",meaning:"having high temperature",emoji:"🔥"},
+  {word:"cold",meaning:"having low temperature",emoji:"❄️"},
+  {word:"fast",meaning:"moving quickly",emoji:"🏃"},
+  {word:"slow",meaning:"not moving quickly",emoji:"🐢"},
+  {word:"funny",meaning:"making you laugh",emoji:"😂"},
+  {word:"scary",meaning:"making you feel afraid",emoji:"👻"},
+  {word:"beautiful",meaning:"very pretty",emoji:"🌸"},
+  {word:"dirty",meaning:"not clean",emoji:"🐖"},
+  {word:"clean",meaning:"not dirty, neat",emoji:"🧼"},
+  {word:"loud",meaning:"making a lot of noise",emoji:"📢"},
+  {word:"quiet",meaning:"making little or no noise",emoji:"🤫"},
+  {word:"brave",meaning:"not afraid of danger",emoji:"🦁"},
+  {word:"kind",meaning:"friendly and caring",emoji:"💛"},
+  {word:"clever",meaning:"quick to learn things",emoji:"🦊"},
+  {word:"tired",meaning:"needing rest or sleep",emoji:"😴"},
+  {word:"hungry",meaning:"needing food",emoji:"🍕"},
+];
+
+const SECTIONS = [
+  {id:"match",label:"Section 1: Match It!",icon:"🔗",color:"#4D96FF",desc:"Match the adjective to its meaning. Tap a word on the left, then its meaning on the right!",count:5},
+  {id:"gap",label:"Section 2: Fill the Gap!",icon:"✏️",color:"#FF922B",desc:"Pick the right adjective to complete each sentence.",count:5},
+  {id:"think",label:"Section 3: Think & Answer!",icon:"🧠",color:"#CC5DE8",desc:"Read the situation and choose the best adjective. These need your brain!",count:5},
+];
+
+const GAP_SENTENCES = [
+  {sentence:"The weather is very ___. Don't forget your umbrella!",answer:"cold",pool:["cold","hot","big","funny"]},
+  {sentence:"My cat slept all day. She is really ___!",answer:"tired",pool:["tired","brave","loud","fast"]},
+  {sentence:"The dog barked all night. It was so ___!",answer:"loud",pool:["loud","quiet","small","kind"]},
+  {sentence:"She helped me carry my bags. She is so ___.",answer:"kind",pool:["kind","scary","dirty","slow"]},
+  {sentence:"He jumped over the river all by himself. He is very ___.",answer:"brave",pool:["brave","sad","cold","quiet"]},
+];
+
+const THINK_QUESTIONS = [
+  {q:"Your dog runs away and hides under the sofa when it hears thunder. What adjective describes your dog?",opts:["brave","scared","hungry","clever"],answer:"scared",hint:"Think about how the dog feels!"},
+  {q:"Your friend never says mean things and always helps people. What word describes your friend?",opts:["loud","kind","dirty","scary"],answer:"kind",hint:"Think about how your friend acts!"},
+  {q:"You stayed up very late watching TV and now you can't stop yawning. How do you feel?",opts:["happy","fast","tired","hot"],answer:"tired",hint:"What happens to your body when you need sleep?"},
+  {q:"Your little brother solved a maths puzzle that even you couldn't do! What adjective describes him?",opts:["slow","clever","sad","quiet"],answer:"clever",hint:"What do we call someone who learns things quickly?"},
+  {q:"You are in a cinema and the film has a monster in it. Your heart is beating fast! How do you feel?",opts:["funny","beautiful","brave","scared"],answer:"scared",hint:"Monsters can make us feel...?"},
+];
+
+let state = {
+  section:-1, qIdx:0, score:0, totalQ:15, answered:false,
+  matchState:null, gapState:null, thinkState:null, pool:[],
+};
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
+function getStarCount(s,t){const p=s/t;if(p>=0.9)return 3;if(p>=0.6)return 2;if(p>=0.3)return 1;return 0;}
+
+function renderStars(n){
+  let h='';for(let i=0;i<3;i++)h+=`<span class="star${i<n?' lit':''}">⭐</span>`;
+  document.getElementById('stars-bar').innerHTML=h;
+}
+
+function updateProgress(){
+  let n=0;for(let s=0;s<state.section;s++)n+=SECTIONS[s].count;
+  n+=state.qIdx+1;
+  const pct=(n-1)/state.totalQ*100;
+  document.getElementById('prog-bar').style.width=pct+'%';
+  document.getElementById('prog-label').textContent=`Question ${Math.min(n,state.totalQ)} of ${state.totalQ}`;
+}
+
+function launchConfetti(){
+  const colors=['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#CC5DE8','#FF922B'];
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration=(1.5+Math.random()*2)+'s';
+    el.style.animationDelay=(Math.random()*0.5)+'s';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
+}
+
+function render(){
+  const ga=document.getElementById('game-area');
+  if(state.section===-1){
+    ga.innerHTML=`
+      <div class="section-intro">
+        <div style="font-size:60px;margin-bottom:12px">🌟</div>
+        <h2>Welcome, Word Explorer!</h2>
+        <p>You will play <strong>3 rounds</strong> with 5 questions each.<br>Match words, fill gaps, and think hard to earn stars! ⭐</p>
+        <button class="start-section-btn" onclick="startSection(0)">Let's Go! 🚀</button>
+      </div>`;
+    renderStars(0); updateProgress(); return;
+  }
+  if(state.section>=SECTIONS.length){renderEnd();return;}
+  if(state.qIdx===-1){
+    const sec=SECTIONS[state.section];
+    ga.innerHTML=`
+      <div class="section-intro">
+        <div style="font-size:56px">${sec.icon}</div>
+        <h2>${sec.label}</h2>
+        <p>${sec.desc}</p>
+        <button class="start-section-btn" onclick="startQuestion()">Start! ${sec.icon}</button>
+      </div>`;
+    return;
+  }
+  updateProgress();
+  const sec=SECTIONS[state.section];
+  if(sec.id==='match') renderMatch();
+  else if(sec.id==='gap') renderGap();
+  else renderThink();
+}
+
+function startSection(idx){
+  state.section=idx; state.qIdx=-1;
+  state.pool=shuffle(adjectives).slice(0,10);
+  render();
+}
+
+function startQuestion(){
+  state.qIdx=0; state.answered=false;
+  const sec=SECTIONS[state.section];
+  if(sec.id==='match') initMatch();
+  else if(sec.id==='gap') initGap();
+  else initThink();
+  render();
+}
+
+/* ===== MATCH ===== */
+function initMatch(){
+  const items=shuffle(state.pool).slice(0,5);
+  const lefts=items.map(a=>({word:a.word+' '+a.emoji,key:a.word}));
+  const rights=shuffle(items.map(a=>({text:a.meaning,key:a.word})));
+  state.matchState={items,lefts,rights,matched:[],selected:null,side:null};
+}
+
+function renderMatch(){
+  const ms=state.matchState;
+  const leftHtml=ms.lefts.map(l=>{
+    const m=ms.matched.includes(l.key),s=ms.selected===l.key&&ms.side==='left';
+    return `<div class="match-item ${m?'matched':s?'selected':''} ${m?'locked':''}" onclick="matchClick('left','${l.key}')">${l.word}</div>`;
+  }).join('');
+  const rightHtml=ms.rights.map(r=>{
+    const m=ms.matched.includes(r.key),s=ms.selected===r.key&&ms.side==='right';
+    return `<div class="match-item ${m?'matched':s?'selected':''} ${m?'locked':''}" onclick="matchClick('right','${r.key}')" id="mr-${r.key}">${r.text}</div>`;
+  }).join('');
+  const allDone=ms.matched.length===ms.items.length;
+  document.getElementById('game-area').innerHTML=`
+    <div class="section-badge"><span class="section-icon">🔗</span> Match It! (${Math.min(ms.matched.length+1,5)}/5)</div>
+    <p style="font-size:14px;color:#888;margin-bottom:12px">Tap a word on the left, then its meaning on the right!</p>
+    <div class="card">
+      <div class="match-grid">
+        <div class="match-col">${leftHtml}</div>
+        <div class="match-col">${rightHtml}</div>
+      </div>
+      <div id="match-feedback" style="margin-top:10px"></div>
+    </div>
+    <button class="next-btn${allDone?' visible':''}" onclick="nextSection()">
+      ${state.section===0?'On to Fill the Gap! ✏️':'Next Section! 🧠'}
+    </button>`;
+}
+
+function matchClick(side,key){
+  const ms=state.matchState;
+  if(ms.matched.includes(key)) return;
+  if(ms.selected===null){ms.selected=key;ms.side=side;renderMatch();return;}
+  if(ms.side===side){ms.selected=key;ms.side=side;renderMatch();return;}
+  const correct=ms.selected===key;
+  if(correct){
+    ms.matched.push(key); state.score++;
+    renderStars(getStarCount(state.score,state.totalQ));
+    ms.selected=null; ms.side=null;
+    renderMatch();
+    if(ms.matched.length===ms.items.length){
+      setTimeout(()=>{const fb=document.getElementById('match-feedback');if(fb)fb.innerHTML=`<span class="feedback-pill good">🎉 All matched! Amazing!</span>`;},200);
+    } else {
+      const fb=document.getElementById('match-feedback');if(fb)fb.innerHTML=`<span class="feedback-pill good">✅ Great match!</span>`;
+    }
+  } else {
+    const lEl=document.querySelector(`[onclick="matchClick('left','${ms.selected}')"]`);
+    const rEl=document.getElementById('mr-'+key);
+    if(lEl)lEl.classList.add('wrong-flash');
+    if(rEl)rEl.classList.add('wrong-flash');
+    setTimeout(()=>{ms.selected=null;ms.side=null;renderMatch();},700);
+  }
+}
+
+function nextSection(){
+  const ns=state.section+1;
+  if(ns<SECTIONS.length) startSection(ns);
+  else{state.section=SECTIONS.length;render();}
+}
+
+/* ===== GAP FILL ===== */
+function initGap(){
+  state.gapState={questions:shuffle(GAP_SENTENCES).slice(0,5),idx:0,currentAnswer:null,checked:false};
+}
+
+function renderGap(){
+  const gs=state.gapState;
+  const q=gs.questions[gs.idx];
+  const parts=q.sentence.split('___');
+  const filled=gs.currentAnswer;
+  const checked=gs.checked;
+  let blankHtml=filled
+    ?`<span class="blank ${filled===q.answer?'filled-correct':'filled-wrong'}">${filled}</span>`
+    :`<span class="blank">?</span>`;
+  const chipsHtml=q.pool.map(w=>`<button class="word-chip" onclick="selectGapWord('${w}')" ${checked?'disabled':''}>${w}</button>`).join('');
+  let feedbackHtml='';
+  if(checked&&filled) feedbackHtml=`<div class="feedback-pill ${filled===q.answer?'good':'bad'}">${filled===q.answer?'✅ Correct! Well done!':'❌ The answer was: <strong>'+q.answer+'</strong>'}</div>`;
+  document.getElementById('game-area').innerHTML=`
+    <div class="section-badge"><span class="section-icon">✏️</span> Fill the Gap! (${gs.idx+1}/5)</div>
+    <div class="card">
+      <div class="question-num">Question ${gs.idx+1} of 5</div>
+      <div class="gap-text">${parts[0]}${blankHtml}${parts[1]||''}</div>
+      <div class="word-options">${chipsHtml}</div>
+      ${feedbackHtml}
+      ${filled&&!checked?`<button class="submit-btn" onclick="checkGap()">Check ✓</button>`:''}
+    </div>
+    <button class="next-btn${checked?' visible':''}" onclick="nextGap()">${gs.idx<4?'Next Question →':'Next Section! 🧠'}</button>`;
+}
+
+function selectGapWord(w){if(state.gapState.checked)return;state.gapState.currentAnswer=w;renderGap();}
+
+function checkGap(){
+  const gs=state.gapState;
+  if(!gs.currentAnswer)return;
+  gs.checked=true;
+  if(gs.currentAnswer===gs.questions[gs.idx].answer){state.score++;launchConfetti();}
+  renderStars(getStarCount(state.score,state.totalQ));
+  renderGap();
+}
+
+function nextGap(){
+  const gs=state.gapState;
+  gs.idx++;gs.currentAnswer=null;gs.checked=false;
+  if(gs.idx>=5){nextSection();return;}
+  renderGap();
+}
+
+/* ===== THINK ===== */
+function initThink(){
+  state.thinkState={questions:shuffle(THINK_QUESTIONS).slice(0,5),idx:0,currentAnswer:null,checked:false,aiText:'',aiLoading:false};
+}
+
+function renderThink(){
+  const ts=state.thinkState;
+  const q=ts.questions[ts.idx];
+  const checked=ts.checked,filled=ts.currentAnswer;
+  const optsHtml=q.opts.map(o=>{
+    let cls='opt-btn';
+    if(checked&&o===q.answer) cls+=' selected-correct';
+    else if(checked&&o===filled&&o!==q.answer) cls+=' selected-wrong';
+    return `<button class="${cls}" onclick="selectThink('${o}')" ${checked?'disabled':''}>${o}</button>`;
+  }).join('');
+  let feedbackHtml='';
+  if(checked&&filled) feedbackHtml=`<div class="feedback-pill ${filled===q.answer?'good':'bad'}">${filled===q.answer?'🎉 Spot on!':'🤔 The best word was: <strong>'+q.answer+'</strong>'}</div>`;
+  let aiHtml='';
+  if(checked){
+    if(ts.aiLoading) aiHtml=`<div class="ai-response show">🤖 Thinking<span class="loading-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>`;
+    else if(ts.aiText) aiHtml=`<div class="ai-response show">🤖 <strong>Word tip:</strong> ${ts.aiText}</div>`;
+  }
+  document.getElementById('game-area').innerHTML=`
+    <div class="section-badge"><span class="section-icon">🧠</span> Think & Answer! (${ts.idx+1}/5)</div>
+    <div class="card">
+      <div class="think-emoji">🤔</div>
+      <div class="question-num">Question ${ts.idx+1} of 5</div>
+      <div class="question-text">${q.q}</div>
+      <p class="think-hint">💡 Hint: ${q.hint}</p>
+      <div class="options">${optsHtml}</div>
+      ${feedbackHtml}
+      ${aiHtml}
+    </div>
+    <button class="next-btn${checked?' visible':''}" onclick="nextThink()">${ts.idx<4?'Next Question →':'See My Score! 🏆'}</button>`;
+}
+
+async function selectThink(w){
+  const ts=state.thinkState;
+  if(ts.checked)return;
+  ts.currentAnswer=w;ts.checked=true;
+  if(w===ts.questions[ts.idx].answer){state.score++;launchConfetti();}
+  renderStars(getStarCount(state.score,state.totalQ));
+  // Try AI explanation if API key provided
+  if(ANTHROPIC_API_KEY){
+    ts.aiLoading=true;ts.aiText='';
+    renderThink();
+    try{
+      const q=ts.questions[ts.idx];
+      const resp=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",max_tokens:200,
+          messages:[{role:"user",content:`You are a fun English teacher for kids aged 8-12 (A2 level). Explain in 2 short friendly sentences why "${q.answer}" is the best adjective for this situation: "${q.q}". Use simple words. Start with an emoji.`}]
+        })
+      });
+      const data=await resp.json();
+      ts.aiText=(data.content&&data.content[0]&&data.content[0].text)||getFallbackTip(ts.questions[ts.idx]);
+    }catch(e){ts.aiText=getFallbackTip(ts.questions[ts.idx]);}
+    ts.aiLoading=false;
+  } else {
+    ts.aiText=getFallbackTip(ts.questions[ts.idx]);
+  }
+  renderThink();
+}
+
+function getFallbackTip(q){
+  const tips={
+    scared:"😨 When something makes us feel afraid or nervous, we say we are 'scared'. The dog is hiding because it is scared of the loud thunder!",
+    kind:"💛 A 'kind' person always thinks about other people's feelings and tries to help them. It's one of the best adjectives to be!",
+    tired:"😴 When our body needs rest and we feel sleepy, we are 'tired'. Staying up late always makes us tired the next day!",
+    clever:"🦊 We say someone is 'clever' when they can learn things quickly or solve hard problems. What a clever brother!",
+  };
+  return tips[q.answer]||`The word "${q.answer}" is perfect here because it describes exactly what is happening in the situation!`;
+}
+
+function nextThink(){
+  const ts=state.thinkState;
+  ts.idx++;ts.currentAnswer=null;ts.checked=false;ts.aiText='';ts.aiLoading=false;
+  if(ts.idx>=5){state.section=SECTIONS.length;render();return;}
+  renderThink();
+}
+
+/* ===== END ===== */
+function renderEnd(){
+  launchConfetti();
+  const pct=state.score/state.totalQ;
+  let medal='🥉',msg='Good try! Keep practising!',color='#888';
+  if(pct>=0.9){medal='🏆';msg='Outstanding! You are an Adjective Champion!';color='#FFD700';}
+  else if(pct>=0.7){medal='🥇';msg='Excellent work! You know your adjectives!';color='#4D96FF';}
+  else if(pct>=0.5){medal='🥈';msg='Well done! You are getting there!';color='#6BCB77';}
+  const stars=getStarCount(state.score,state.totalQ);
+  let starsHtml='';for(let i=0;i<3;i++)starsHtml+=`<span style="font-size:34px;${i<stars?'':'filter:grayscale(1) opacity(0.3)'}">⭐</span>`;
+  const wordList=['happy','sad','big','small','hot','cold','fast','slow','kind','brave','clever','tired','loud','quiet','beautiful'];
+  document.getElementById('game-area').innerHTML=`
+    <div class="end-screen">
+      <div class="medal">${medal}</div>
+      <div class="end-title" style="color:${color}">You Did It!</div>
+      <div class="end-score">Score: ${state.score} / ${state.totalQ}</div>
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:20px">${starsHtml}</div>
+      <p style="font-size:18px;font-weight:700;margin-bottom:20px">${msg}</p>
+      <div style="background:#f5f0e8;border-radius:16px;padding:18px;margin-bottom:22px;text-align:left">
+        <p style="font-weight:800;margin-bottom:10px;font-size:15px">📚 Adjectives you practised:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          ${wordList.map(w=>`<span style="background:#fff;border:2px solid #e0d8cc;border-radius:999px;padding:5px 13px;font-size:13px;font-weight:700">${w}</span>`).join('')}
+        </div>
+      </div>
+      <button class="restart-btn" onclick="restartGame()">🔄 Play Again!</button>
+    </div>`;
+  renderStars(stars);
+  document.getElementById('prog-bar').style.width='100%';
+  document.getElementById('prog-label').textContent='Finished! 🎉';
+}
+
+function restartGame(){
+  state={section:-1,qIdx:0,score:0,totalQ:15,answered:false,matchState:null,gapState:null,thinkState:null,pool:[]};
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
